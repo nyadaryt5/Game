@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仙门掌门 · Sect Master — 修真宗门经营</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <!-- ══════════ TOP BAR ══════════ -->
+  <header id="topbar">
+    <div id="sect-box">
+      <div id="sect-name" title="点击修改宗门名号">青云门</div>
+      <div id="rep-wrap">
+        <div id="rep-fill"></div>
+        <span id="rep-txt">声望 Lv.1</span>
+      </div>
+    </div>
+    <div id="resbar">
+      <span class="res-chip" id="r-stone" title="灵石 Spirit Stones — 主要货币"><i>💠</i><b>400</b></span>
+      <span class="res-chip" id="r-herb"  title="灵草 Spirit Herbs — 炼丹原料"><i>🌿</i><b>40</b></span>
+      <span class="res-chip" id="r-pill"  title="灵丹 Pills — 辅助修炼与突破"><i>💊</i><b>0</b></span>
+      <span class="res-chip" id="r-ore"   title="矿石 Spirit Ore — 炼器原料"><i>⛏️</i><b>10</b></span>
+      <span class="res-chip" id="r-art"   title="法器 Artifacts — 弟子装备"><i>⚔️</i><b>0</b></span>
+      <span class="res-chip" id="r-talis" title="符箓 Talismans — 战斗消耗品"><i>🧿</i><b>0</b></span>
+    </div>
+    <div id="sys-box">
+      <span class="sys-chip" id="energy-chip" title="灵气 — 大殿与聚灵阵提供，建筑消耗">灵气 <b>5/5</b></span>
+      <span class="sys-chip" id="power-chip" title="宗门战力 — 全体弟子的综合实力">战力 <b>0</b></span>
+      <div id="time-box">
+        <span id="day-txt">第 1 天</span><span id="shichen">子时</span>
+        <div id="speed-box">
+          <button class="spd-btn" data-spd="0" title="暂停">⏸</button>
+          <button class="spd-btn on" data-spd="1">▶</button>
+          <button class="spd-btn" data-spd="2">▶▶</button>
+          <button class="spd-btn" data-spd="4">▶▶▶</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════ TAB BAR ══════════ -->
+  <nav id="tabbar">
+    <button class="tab-btn on" data-tab="build">🏯 建筑</button>
+    <button class="tab-btn" data-tab="disc">🧑‍🌾 弟子</button>
+    <button class="tab-btn" data-tab="quest">🗺️ 历练</button>
+    <button class="tab-btn" data-tab="lib">📜 藏经</button>
+    <button class="tab-btn" data-tab="store">🏺 仓库</button>
+    <button class="tab-btn" data-tab="tasks">📋 议事</button>
+  </nav>
+
+  <!-- ══════════ GAME AREA ══════════ -->
+  <main id="main">
+    <canvas id="game-canvas"></canvas>
+    <aside id="sidepanel"></aside>
+    <div id="tasktracker"></div>
+    <div id="toasts"></div>
+  </main>
+</div>
+
+<!-- overlays -->
+<div id="modal-root"></div>
+<div id="battle-root"></div>
+<div id="tooltip"></div>
+<div id="intro">
+  <div id="intro-card">
+    <div id="intro-title">仙门掌门</div>
+    <div id="intro-sub">SECT MASTER · 修真宗门经营志</div>
+    <div id="intro-story">
+      灵潮再起，百宗争锋。你继任青云门掌门，于云海山巅执掌一脉传承——<br>
+      建殿阁、纳门徒、炼丹器、修大道，直至问鼎仙途，镇压诸派。
+    </div>
+    <ul id="intro-how">
+      <li><b>经营</b> — 在山门网格上建造殿阁（练功房、灵药园、炼丹房……）</li>
+      <li><b>育才</b> — 招收弟子、指派职司、突破境界，灵根决定天赋</li>
+      <li><b>征伐</b> — 派弟子外出历练、攻打敌对宗门，战局自动演算</li>
+    </ul>
+    <div id="intro-hint">滚轮缩放 · 拖拽平移 · 点击建筑管理 · 空格暂停</div>
+    <button id="intro-btn">踏入仙途</button>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/state.js"></script>
+<script src="js/render.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
