@@ -1,99 +1,66 @@
 package com.sectmaster.game;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.WindowManager;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
-/**
- * Sect Master (仙门掌门) — native Android shell that hosts the HTML5 game
- * in a fullscreen WebView. The game itself lives in assets/www/ and runs
- * entirely client-side (its saves use WebView localStorage).
- */
-public class MainActivity extends Activity {
+/** Single-activity native Android game. No WebView, JavaScript, or network connection is used. */
+public final class MainActivity extends Activity implements GameView.Host {
+    private GameView gameView;
 
-    private WebView webView;
-
-    @SuppressLint("SetJavaScriptEnabled")
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
-        webView = new WebView(this);
-        WebSettings s = webView.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);           // game saves (localStorage)
-        s.setDatabaseEnabled(true);
-        s.setAllowFileAccess(true);
-        s.setAllowContentAccess(true);
-        s.setMediaPlaybackRequiresUserGesture(false); // allow WebAudio after unlock
-        s.setLoadWithOverviewMode(true);
-        s.setUseWideViewPort(true);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT);
-
-        webView.setWebViewClient(new WebViewClient());
-        webView.setWebChromeClient(new WebChromeClient());
-        webView.setBackgroundColor(0xff0c1612);
-        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        webView.loadUrl("file:///android_asset/www/index.html");
-
-        setContentView(webView);
-        hideSystemUi();
+        GameState state = GameState.load(this);
+        String offline = state.offlineSummary(System.currentTimeMillis());
+        gameView = new GameView(this, state, this);
+        setContentView(gameView);
+        hideSystemBars();
+        if (offline != null) gameView.showMessage(offline);
     }
 
-    private void hideSystemUi() {
-        webView.setSystemUiVisibility(
-            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                | View.SYSTEM_UI_FLAG_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+    private void hideSystemBars() {
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.statusBars() | WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
+                View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        }
     }
 
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) hideSystemUi();
+    @Override public void onWindowFocusChanged(boolean focused) {
+        super.onWindowFocusChanged(focused);
+        if (focused) hideSystemBars();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
-    }
-
-    @Override
-    protected void onPause() {
+    @Override protected void onPause() {
+        if (gameView != null) gameView.getState().save(this);
         super.onPause();
-        if (webView != null) {
-            webView.onPause();
-            webView.pauseTimers();
-        }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (webView != null) {
-            webView.onResume();
-            webView.resumeTimers();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (webView != null) {
-            webView.destroy();
-            webView = null;
-        }
-        super.onDestroy();
+    @Override public void requestReset() {
+        new AlertDialog.Builder(this)
+            .setTitle("Reset all progress?")
+            .setMessage("This permanently erases your sect, disciples, resources, and achievements.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Reset", (dialog, which) -> {
+                GameState.clearSave(this);
+                GameState fresh = new GameState();
+                fresh.save(this);
+                gameView.replaceState(fresh);
+                gameView.showMessage("A new sect has been founded.");
+            }).show();
     }
 }
