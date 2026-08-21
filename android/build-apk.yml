@@ -1,59 +1,45 @@
 # ─────────────────────────────────────────────────────────────
 #  GitHub Actions workflow — builds the Android release APK.
 #
-#  NOTE: this file is kept OUTSIDE `.github/workflows/` because it is
-#  published to the repo by an automation token without `workflows`
-#  permission. To enable automatic APK builds, copy this file to:
+#  This file is kept here (outside .github/workflows/) only because it is
+#  published to the repo by an automation token that GitHub refuses for
+#  workflow files. To enable APK builds, copy this file to:
 #
 #      .github/workflows/build-apk.yml
 #
-#  (or create it there from your own account, then push).
+#  The workflow lives on the DEFAULT branch but always checks out the
+#  arena/01a021d3-game branch (where the android/ project lives).
 # ─────────────────────────────────────────────────────────────
-name: Build Android APK
+name: Build APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - arena/01a021d3-game
-    paths:
-      - 'android/**'
-      - 'index.html'
-      - 'styles.css'
-      - 'js/**'
-      - 'scripts/**'
-      - '.github/workflows/build-apk.yml'
-
-permissions:
-  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: arena/01a021d3-game
 
       - name: Sync game into Android assets
         run: bash scripts/sync-android.sh
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
 
-      - name: Set up Gradle 8.7
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.7
+          gradle-version: '8.7'
 
       - name: Build release APK
+        run: gradle assembleRelease
         working-directory: android
-        run: gradle assembleRelease --no-daemon --stacktrace
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: sect-master-apk
           path: android/app/build/outputs/apk/release/*.apk
