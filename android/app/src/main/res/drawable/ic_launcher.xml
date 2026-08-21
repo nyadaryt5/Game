@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- background -->
+    <path android:fillColor="#0e1a15" android:pathData="M0,0h108v108H0z" />
+    <!-- soft glow behind the emblem -->
+    <path android:fillColor="#16231d" android:pathData="M54,30m-24,0a24,24 0 1,1 48,0a24,24 0 1,1 -48,0" />
+    <!-- pagoda roof -->
+    <path android:fillColor="#d8b56a" android:pathData="M22,62 L54,36 L86,62 L76,62 L54,44 L32,62 Z" />
+    <path android:fillColor="#9a7f48" android:pathData="M32,62 L76,62 L76,68 L32,68 Z" />
+    <!-- gate pillars -->
+    <path android:fillColor="#d8b56a" android:pathData="M36,68 h7 v20 h-7 Z" />
+    <path android:fillColor="#d8b56a" android:pathData="M65,68 h7 v20 h-7 Z" />
+    <!-- base -->
+    <path android:fillColor="#9a7f48" android:pathData="M26,88 h56 v7 h-56 Z" />
+    <!-- jade orb -->
+    <path android:fillColor="#5fc9a2" android:pathData="M54,16m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0" />
+</vector>
