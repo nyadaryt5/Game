@@ -5,6 +5,7 @@
   "use strict";
   const D = (window.G = window.G || {});
   const SAVE_KEY = "sect-master-save-v1";
+  const SEEN_KEY = "sect-master-seen-v1";
 
   // global event hook (toasts, particles, battle trigger) — wired in main.js
   D.onEvent = () => { };
@@ -33,7 +34,7 @@
 
     /* ── new game setup ────────────────────── */
     newGame() {
-      const hall = { id: D.rid(), type: "hall", x: 6, y: 4, lvl: 1 };
+      const hall = { id: D.rid(), type: "hall", x: 6, y: 4, lvl: 1, assigned: [], recipe: null, progress: 0, damaged: false };
       this.rooms = [hall];
       // deterministic-ish starting rocks
       const rocks = [[1, 1], [13, 9], [0, 10], [14, 2], [2, 9], [12, 1], [15, 6], [4, 0], [9, 11], [7, 11]];
@@ -750,6 +751,7 @@
       Object.assign(s, json);
       // safety: ensure fields exist
       s.arts = s.arts || []; s.rocks = s.rocks || []; s.tasksDone = s.tasksDone || [];
+      s.rooms = (s.rooms || []).map((r) => Object.assign({ assigned: [], recipe: null, progress: 0, damaged: false }, r));
       s.stats = Object.assign({ pillsMade: 0, artsMade: 0, talisMade: 0, missionsDone: 0, missionsWon: 0, raidsWon: 0, defensesWon: 0, battlesLost: 0, breakthroughs: 0 }, s.stats);
       s.techs = s.techs || { unlocked: [], researching: null };
       s.missions = s.missions || { active: [], lastDone: {} };
@@ -770,6 +772,47 @@
       return null;
     }
     static wipe() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } }
+
+    /* ── offline progress ──────────────────── */
+    // Real-world timestamp tracking so we can grant offline earnings on return.
+    static touchSeen() {
+      try { localStorage.setItem(SEEN_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+    }
+    static elapsedSinceSeen() {
+      try {
+        const ts = parseInt(localStorage.getItem(SEEN_KEY) || "0", 10);
+        if (!ts) return 0;
+        return Math.max(0, Math.floor((Date.now() - ts) / 1000));
+      } catch (e) { return 0; }
+    }
+    // Run production quietly for a capped amount of real seconds at reduced
+    // efficiency, without advancing game time (no raids/events/defenses).
+    simulateOffline(seconds) {
+      seconds = Math.max(0, seconds || 0);
+      const CAP = 8 * 3600, RATE = 0.5;
+      const span = Math.min(seconds, CAP);
+      const sim = span * RATE;
+      if (sim <= 2) return null;
+      const before = {
+        stone: this.res.stone, herb: this.res.herb, ore: this.res.ore,
+        pill: this.pillCount(), talis: this.talisCount(), art: this.arts.length,
+      };
+      const ev = D.onEvent;
+      D.onEvent = () => { }; // suppress toasts/particles during fast-forward
+      try {
+        let t = 0; const step = 20;
+        while (t < sim) { const dt = Math.min(step, sim - t); this.production(dt); t += dt; }
+      } finally { D.onEvent = ev; }
+      const gains = {
+        stone: this.res.stone - before.stone,
+        herb: this.res.herb - before.herb,
+        ore: this.res.ore - before.ore,
+        pill: this.pillCount() - before.pill,
+        talis: this.talisCount() - before.talis,
+        art: this.arts.length - before.art,
+      };
+      return { seconds: span, gains };
+    }
   }
 
   D.GameState = GameState;

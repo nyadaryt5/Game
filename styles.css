@@ -81,6 +81,12 @@ button{font-family:inherit;cursor:pointer;}
 }
 .spd-btn:last-child{border-right:none;}
 .spd-btn.on{background:var(--jade-dim);color:#eafff4;}
+.icon-btn{
+  width:28px;height:28px;background:#101b16;border:1px solid var(--line);
+  border-radius:13px;font-size:13px;color:var(--text);line-height:1;
+}
+.icon-btn:hover{background:#16231d;}
+.icon-btn.muted{opacity:.55;}
 
 /* ── tab bar ─────────────────────────────── */
 #tabbar{
@@ -360,11 +366,26 @@ select:focus,input:focus{outline:none;border-color:var(--gold-dim);}
   background:radial-gradient(circle at 20% 20%,rgba(95,201,162,.12),transparent 40%),
              radial-gradient(circle at 80% 75%,rgba(216,181,106,.10),transparent 45%);
 }
-#intro-card{position:relative;text-align:center;max-width:560px;padding:30px 44px;}
+/* drifting title-screen clouds */
+.intro-cloud{
+  position:absolute;border-radius:50%;background:rgba(201,214,205,.08);
+  filter:blur(2px);pointer-events:none;
+}
+.intro-cloud.c1{width:420px;height:90px;left:-10%;top:12%;animation:clouddrift 38s linear infinite;}
+.intro-cloud.c2{width:320px;height:70px;left:-10%;top:32%;animation:clouddrift 54s linear infinite;animation-delay:-20s;}
+.intro-cloud.c3{width:520px;height:110px;left:-10%;top:6%;animation:clouddrift 46s linear infinite;animation-delay:-9s;}
+@keyframes clouddrift{
+  0%{transform:translateX(-110%);}
+  100%{transform:translateX(140vw);}
+}
+#intro-card{position:relative;text-align:center;max-width:560px;padding:30px 44px;animation:cardfloat 5s ease-in-out infinite;}
+@keyframes cardfloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
 #intro-title{
   font-size:46px;font-weight:900;color:var(--gold);letter-spacing:14px;
   text-shadow:0 0 30px rgba(216,181,106,.5);margin-bottom:4px;
+  animation:titleglow 3.4s ease-in-out infinite;
 }
+@keyframes titleglow{0%,100%{text-shadow:0 0 24px rgba(216,181,106,.45);}50%{text-shadow:0 0 46px rgba(216,181,106,.85);}}
 #intro-sub{font-size:12px;color:var(--dim);letter-spacing:5px;margin-bottom:20px;}
 #intro-story{font-size:13px;color:var(--text);line-height:1.9;margin-bottom:18px;}
 #intro-how{list-style:none;text-align:left;font-size:12px;color:var(--dim);line-height:2;margin-bottom:14px;}

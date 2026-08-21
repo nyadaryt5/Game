@@ -9,6 +9,8 @@
   const cam = { x: 0, y: 0, zoom: 1 };
   const wanderers = {}; // discipleId -> {x,y,tx,ty,wait,phase,dir}
   const fx = { texts: [], parts: [] };
+  const ambient = { clouds: [], petals: [] }; // atmospheric layer
+  let shake = 0; // screen-shake strength (world px)
 
   let canvas = null, ctx = null, W = 0, H = 0;
 
@@ -68,6 +70,28 @@
       if (p.type === "smoke") { p.vx += D.rand(-3, 3) * dt; p.vy -= 2 * dt; }
     });
     fx.parts = fx.parts.filter((p) => p.life > 0);
+    shake = Math.max(0, shake - dt * 3.2);
+    updateAmbient(dt);
+  }
+
+  /* ── atmosphere (clouds + falling petals) ── */
+  function ensureAmbient() {
+    if (ambient.clouds.length) return;
+    for (let i = 0; i < 7; i++) {
+      ambient.clouds.push({ x: Math.random() * 2200, y: 40 + Math.random() * 260, s: D.rand(0.6, 1.7), v: D.rand(5, 16), a: D.rand(0.03, 0.08) });
+    }
+    for (let i = 0; i < 26; i++) {
+      ambient.petals.push({ x: Math.random() * D.GRID.w * TILE, y: Math.random() * D.GRID.h * TILE, s: D.rand(2, 4.5), v: D.rand(9, 26), r: D.rand(0, 6.3), vr: D.rand(-1.8, 1.8), sway: D.rand(0, 6.3), c: D.pick(["#e8c9a8", "#d8b56a", "#a8d8c8", "#c9a4ff"]) });
+    }
+  }
+  function updateAmbient(dt) {
+    ensureAmbient();
+    ambient.clouds.forEach((c) => { c.x += c.v * dt; if (c.x > W + 300) { c.x = -300; c.y = 40 + Math.random() * 260; } });
+    ambient.petals.forEach((p) => {
+      p.y += p.v * dt; p.r += p.vr * dt; p.sway += dt;
+      p.x += Math.sin(p.sway) * 12 * dt;
+      if (p.y > D.GRID.h * TILE + 20) { p.y = -20; p.x = Math.random() * D.GRID.w * TILE; }
+    });
   }
 
   /* ── tile drawing ─────────────────────────── */
@@ -602,6 +626,50 @@
     void timeMs;
   }
 
+  /* ── ambient layers ───────────────────────── */
+  function drawClouds() {
+    ambient.clouds.forEach((c) => {
+      ctx.save();
+      ctx.globalAlpha = c.a;
+      ctx.fillStyle = "#c9d6cd";
+      const s = c.s;
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, 96 * s, 17 * s, 0, 0, 7);
+      ctx.ellipse(c.x - 42 * s, c.y + 5 * s, 42 * s, 13 * s, 0, 0, 7);
+      ctx.ellipse(c.x + 46 * s, c.y + 4 * s, 48 * s, 14 * s, 0, 0, 7);
+      ctx.ellipse(c.x, c.y - 13 * s, 36 * s, 15 * s, 0, 0, 7);
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+  function drawPetals() {
+    ambient.petals.forEach((p) => {
+      const [sx, sy] = w2s(p.x, p.y);
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(p.r);
+      ctx.globalAlpha = 0.72;
+      ctx.fillStyle = p.c;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, p.s * 0.95 * cam.zoom, p.s * 0.45 * cam.zoom, 0, 0, 7);
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+  function drawDayNight(state) {
+    const ph = (state.time % D.DAY_SECS) / D.DAY_SECS; // 0..1 across a day
+    const daylight = 0.5 - 0.5 * Math.cos(2 * Math.PI * ph);
+    const night = 1 - daylight;
+    if (night > 0.02) {
+      ctx.fillStyle = "rgba(12,18,44," + (night * 0.26).toFixed(3) + ")";
+      ctx.fillRect(0, 0, W, H);
+    }
+    if (daylight > 0.3) {
+      ctx.fillStyle = "rgba(255,196,110," + ((daylight - 0.3) * 0.06).toFixed(3) + ")";
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
   /* ── main draw ────────────────────────────── */
   function draw(state, ui, timeMs) {
     if (!ctx) return;
@@ -609,6 +677,13 @@
     // background outside grid
     ctx.fillStyle = "#0f1b16";
     ctx.fillRect(0, 0, W, H);
+    // drifting clouds behind the mountain (screen-space sky)
+    drawClouds();
+    // screen shake — offset the whole world
+    const shx = (Math.random() - 0.5) * 2 * shake * cam.zoom;
+    const shy = (Math.random() - 0.5) * 2 * shake * cam.zoom;
+    ctx.save();
+    ctx.translate(shx, shy);
     drawGround(state, timeMs);
     // rooms (sorted: hall last on top)
     const rooms = state.rooms.slice().sort((a, b) => (a.type === "hall" ? 1 : 0) - (b.type === "hall" ? 1 : 0));
@@ -665,6 +740,8 @@
       ctx.globalAlpha = 1;
     });
 
+    // falling petals (foreground, world-space)
+    drawPetals();
     // hover tile
     if (ui && ui.hover) {
       const [hx, hy] = w2s(ui.hover.tx * TILE, ui.hover.ty * TILE);
@@ -672,12 +749,17 @@
       ctx.lineWidth = 1.5;
       ctx.strokeRect(hx, hy, TILE * cam.zoom, TILE * cam.zoom);
     }
+    ctx.restore();
+    // day / night ambient tint
+    drawDayNight(state);
     void timeMs;
   }
 
+  function addShake(amt) { shake = Math.min(0.8, shake + (amt || 0.4)); }
+
   D.Render = {
     init, resize, fitView, draw, updateWander, updateFx,
-    tileAt, w2s, s2w, spawnText, spawnPart,
+    tileAt, w2s, s2w, spawnText, spawnPart, addShake,
     get cam() { return cam; },
     get TILE() { return TILE; },
   };

@@ -38,20 +38,44 @@
     U.setTab("build");
     U.updateTasks();
 
+    // sound toggle (persisted)
+    D.Sound.updateBtn();
+    const soundBtn = document.getElementById("sound-btn");
+    if (soundBtn) soundBtn.onclick = () => { D.Sound.toggle(); D.Sound.updateBtn(); };
+
     if (saved) {
       // resume: pending warnings
       if (state.events.pending) U.showEvent(state.events.pending);
       if (state.defense && state.time < state.defense.until) U.showDefenseWarning(state.defense);
       $("#intro").style.display = "none";
       toastQuiet("存档已载入：第 " + (Math.floor(state.time / D.DAY_SECS) + 1) + " 天");
+      // offline earnings
+      const elapsed = D.GameState.elapsedSinceSeen();
+      if (elapsed >= 60) {
+        const off = state.simulateOffline(elapsed);
+        if (off) {
+          const g = off.gains;
+          const parts = [];
+          if (g.stone > 0) parts.push("💠 +" + D.fmt(g.stone));
+          if (g.herb > 0) parts.push("🌿 +" + D.fmt(g.herb));
+          if (g.ore > 0) parts.push("⛏️ +" + D.fmt(g.ore));
+          if (g.pill > 0) parts.push("💊 +" + g.pill);
+          if (g.talis > 0) parts.push("🧿 +" + g.talis);
+          if (g.art > 0) parts.push("⚔️ +" + g.art);
+          if (parts.length) {
+            U.toast("🌙 离线 " + D.fmtTime(off.seconds) + " 收成：" + parts.join("  "), "good");
+          }
+        }
+      }
+      D.GameState.touchSeen();
     }
 
     D.Render.resize();
     D.Render.fitView();
     window.addEventListener("resize", () => { D.Render.resize(); });
-    setInterval(() => { state.save(); }, 10000);
-    window.addEventListener("beforeunload", () => state.save());
-    document.addEventListener("visibilitychange", () => { if (document.hidden) state.save(); });
+    setInterval(() => { state.save(); D.GameState.touchSeen(); }, 10000);
+    window.addEventListener("beforeunload", () => { state.save(); D.GameState.touchSeen(); });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) { state.save(); D.GameState.touchSeen(); } });
     requestAnimationFrame(loop);
   }
 
@@ -74,19 +98,22 @@
         case "replevel": U.toast("🌟 宗门声望提升至 Lv." + data.lvl + "！", "good"); break;
         case "roomplaced": {
           D.Render.spawnText(roomCX(data.room), roomCY(data.room), "落成", "#f0c060");
+          D.Sound.play("build");
           U.updateTopbar();
           break;
         }
         case "roomupgraded": {
           D.Render.spawnText(roomCX(data.room), roomCY(data.room), "升级 Lv." + data.room.lvl, "#f0c060", true);
+          D.Sound.play("upgrade");
           U.refreshPanel(); U.updateTopbar();
           break;
         }
         case "roomdemolished": U.toast("殿阁已拆除"); U.updateTopbar(); break;
-        case "recruit": U.toast("🧑‍🌾 「" + data.d.name + "」拜入宗门"); U.updateTopbar(); break;
+        case "recruit": D.Sound.play("recruit"); U.toast("🧑‍🌾 「" + data.d.name + "」拜入宗门"); U.updateTopbar(); break;
         case "levelup": {
           const p = disciplePos(data.d);
           D.Render.spawnText(p.x, p.y, "修为精进", "#5fc9a2");
+          D.Sound.play("levelup");
           if (data.step % 3 === 0) U.toast("🌟 " + data.d.name + " 晋升" + D.STEPS[data.step].cn);
           break;
         }
@@ -94,18 +121,22 @@
           const p = disciplePos(data.d);
           D.Render.spawnText(p.x, p.y, "突破！" + D.STEPS[data.step].cn, "#f0c060", true);
           for (let i = 0; i < 14; i++) D.Render.spawnPart(p.x + D.rand(-20, 20), p.y + D.rand(-20, 10), i % 2 ? "gold" : "spark");
+          D.Render.addShake(0.5);
+          D.Sound.play("breakthrough");
           U.toast("⚡ " + data.d.name + " 突破成功，晋升" + D.STEPS[data.step].cn + "！", "good");
           break;
         }
         case "breakfail": {
           const p = disciplePos(data.d);
           D.Render.spawnText(p.x, p.y, "走火入魔", "#d9685e", true);
+          D.Sound.play("fail");
           U.toast("😰 " + data.d.name + " 突破失败，修为受损……", "bad");
           break;
         }
         case "pilluse": U.toast(data.d.name + " 服用丹药，修为大涨", "good"); break;
         case "craft": {
           const r = data.room;
+          D.Sound.play("craft");
           if (data.kind === "art") {
             const a = state.arts[state.arts.length - 1];
             D.Render.spawnText(roomCX(r), roomCY(r), D.TIERS[a.tier].name + "！", D.TIERS[a.tier].color, true);
@@ -117,6 +148,7 @@
         }
         case "techdone": {
           const t = D.TECHS.find((x) => x.key === data.key);
+          D.Sound.play("upgrade");
           U.toast("📜 研究完成：「" + t.name + "」" + t.desc, "good");
           U.refreshPanel();
           break;
@@ -124,16 +156,20 @@
         case "missionsent": U.refreshPanel(); break;
         case "raidsent": U.refreshPanel(); break;
         case "taskdone": {
+          D.Sound.play("victory");
           U.toast("🎯 完成掌门试炼：「" + data.task.title + "」", "good");
           U.updateTasks(); U.updateTopbar();
           break;
         }
         case "event": U.showEvent(data.ev); break;
-        case "defensewarning": U.showDefenseWarning(state.defense); break;
+        case "defensewarning": D.Sound.play("battle"); U.showDefenseWarning(state.defense); break;
         case "battledone": {
           U.updateTopbar(); U.updateTasks(); U.refreshPanel();
           if (data.win) {
+            D.Sound.play("victory");
             U.toast("🏆 " + (data.mdef ? data.mdef.name : "战斗") + " 大捷！", "good");
+          } else {
+            D.Sound.play("defeat");
           }
           break;
         }
@@ -223,6 +259,63 @@
       if (e.key === "3") state.speed = 2, U.updateTopbar();
       if (e.key === "4") state.speed = 4, U.updateTopbar();
     });
+
+    // unlock audio on first gesture (autoplay policy)
+    const unlockAudio = () => { D.Sound.init(); };
+    window.addEventListener("pointerdown", unlockAudio, { once: true });
+    window.addEventListener("keydown", unlockAudio, { once: true });
+
+    // soft click blip for any button interaction
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("button, .tab-btn, .spd-btn")) D.Sound.play("click");
+    }, true);
+
+    // ── touch input (Android / mobile): drag=pan, pinch=zoom, tap=click ──
+    let tStart = null, tLast = null, pinch0 = 0, tMoved = false;
+    const tPos = (t) => {
+      const rect = canvas.getBoundingClientRect();
+      return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+    };
+    canvas.addEventListener("touchstart", (e) => {
+      D.Sound.init();
+      if (e.touches.length === 1) {
+        tStart = tPos(e.touches[0]); tLast = tStart; tMoved = false;
+      } else if (e.touches.length === 2) {
+        const a = tPos(e.touches[0]), b = tPos(e.touches[1]);
+        pinch0 = Math.hypot(a.x - b.x, a.y - b.y);
+        tStart = null;
+      }
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => {
+      if (e.touches.length === 1 && tStart) {
+        const p = tPos(e.touches[0]);
+        const dx = p.x - tLast.x, dy = p.y - tLast.y;
+        if (Math.abs(dx) + Math.abs(dy) > 4) tMoved = true;
+        D.Render.cam.x += dx; D.Render.cam.y += dy;
+        tLast = p;
+      } else if (e.touches.length === 2) {
+        const a = tPos(e.touches[0]), b = tPos(e.touches[1]);
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (pinch0 > 0) {
+          const cx = (a.x + b.x) / 2, cy = (a.y + b.y) / 2;
+          const nz = D.clamp(D.Render.cam.zoom * (d / pinch0), 0.4, 2.4);
+          const wx = (cx - D.Render.cam.x) / D.Render.cam.zoom;
+          const wy = (cy - D.Render.cam.y) / D.Render.cam.zoom;
+          D.Render.cam.zoom = nz;
+          D.Render.cam.x = cx - wx * nz;
+          D.Render.cam.y = cy - wy * nz;
+        }
+        pinch0 = d;
+      }
+      e.preventDefault();
+    }, { passive: false });
+    canvas.addEventListener("touchend", (e) => {
+      if (tStart && !tMoved && e.changedTouches.length === 1) {
+        handleClick(tStart.x, tStart.y);
+      }
+      tStart = null; pinch0 = 0;
+    }, { passive: false });
   }
 
   function handleClick(sx, sy) {
