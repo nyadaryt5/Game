@@ -58,5 +58,5 @@ android/app/src/main/java/com/sectmaster/game/
   GameView.java       Native rendering, touch controls, and all game screens
   GameState.java      Simulation, economy, progression, and persistence
 android/app/src/main/res/                  Android resources
-.github/workflows/build-android.yml        CI build and Play bundle validation
+android/build-android.yml                  CI build and Play bundle template
 ```
