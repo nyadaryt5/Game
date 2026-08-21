@@ -1,3 +1,14 @@
+# ─────────────────────────────────────────────────────────────
+#  GitHub Actions workflow — builds the Android release APK.
+#
+#  NOTE: this file is kept OUTSIDE `.github/workflows/` because it is
+#  published to the repo by an automation token without `workflows`
+#  permission. To enable automatic APK builds, copy this file to:
+#
+#      .github/workflows/build-apk.yml
+#
+#  (or create it there from your own account, then push).
+# ─────────────────────────────────────────────────────────────
 name: Build Android APK
 
 on:

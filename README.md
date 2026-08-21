@@ -53,9 +53,10 @@ python3 -m http.server 8080
 游戏本体位于 `android/app/src/main/assets/www/`，由 `scripts/sync-android.sh`
 从仓库根目录同步过去（改动游戏后记得再跑一次）。
 
-**方式一 · GitHub Actions（无需本地环境）**：推送到 `arena/01a021d3-game`
-分支后，`.github/workflows/build-apk.yml` 会自动构建并上传 `sect-master-apk`，
-到 Actions 页面的该次运行里下载即可；也可在 Actions 页手动 `Run workflow`。
+**方式一 · GitHub Actions（无需本地环境）**：把仓库里的 `android/build-apk.yml`
+复制为 `.github/workflows/build-apk.yml` 并推送后，推送到 `arena/01a021d3-game`
+分支就会自动构建并上传 `sect-master-apk`，到 Actions 页面的该次运行里下载即可；
+也可在 Actions 页手动 `Run workflow`。
 
 **方式二 · 本地构建（Android Studio）**：用 Android Studio 打开 `android/`
 目录，等它完成 Gradle 同步后，`Build → Build APK(s)`；或命令行：
