@@ -45,6 +45,28 @@ python3 -m http.server 8080
 # 打开 http://localhost:8080
 ```
 
+## 📱 Android APK
+
+`android/` 目录是一个原生 Android 壳（Java + WebView），把上面这套 HTML5 游戏
+打包成可安装的 APK（沉浸式全屏、横屏、支持触屏拖拽/双指缩放、本地存档）。
+
+游戏本体位于 `android/app/src/main/assets/www/`，由 `scripts/sync-android.sh`
+从仓库根目录同步过去（改动游戏后记得再跑一次）。
+
+**方式一 · GitHub Actions（无需本地环境）**：推送到 `arena/01a021d3-game`
+分支后，`.github/workflows/build-apk.yml` 会自动构建并上传 `sect-master-apk`，
+到 Actions 页面的该次运行里下载即可；也可在 Actions 页手动 `Run workflow`。
+
+**方式二 · 本地构建（Android Studio）**：用 Android Studio 打开 `android/`
+目录，等它完成 Gradle 同步后，`Build → Build APK(s)`；或命令行：
+
+```bash
+cd android
+gradle assembleRelease   # 产物在 app/build/outputs/apk/release/
+```
+
+> release 版默认用调试密钥签名，可直接安装；上架前请换成自己的 keystore。
+
 ## 🧪 测试
 
 引擎（资源/生产/战斗/存档）与浏览器 UI 解耦，可用 Node 无头验证：
@@ -68,7 +90,10 @@ js/main.js        主循环、输入、事件接线
 
 ## 🗺️ 路线图
 
+- [x] 音效（WebAudio 合成，含静音开关）
+- [x] 离线收益（离线归来按 50% 效率结算，上限 8 小时）
+- [x] 氛围动画（流云、落花、昼夜晨昏光影、突破震屏、动态标题）
+- [x] 触屏操作（拖拽平移 / 双指缩放 / 点按，适配安卓）
 - [ ] 灵兽园（灵兽随行出战）、双修/道侣系统
 - [ ] 跨宗门联盟与宗门战（真·PvP）
-- [ ] 更多建筑皮肤与主题、音效
-- [ ] 离线收益
+- [ ] 更多建筑皮肤与主题
