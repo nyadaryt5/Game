@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- planet -->
+    <path android:pathData="M54,58m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="46" android:centerY="50" android:gradientRadius="30">
+                <item android:offset="0" android:color="#FF7DF9FF" />
+                <item android:offset="0.5" android:color="#FF2C8FE0" />
+                <item android:offset="1" android:color="#FF10265C" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- continents -->
+    <path
+        android:pathData="M40,52c4,-5 12,-4 14,1c2,4 -3,7 -8,6c-5,-1 -8,-4 -6,-7z"
+        android:fillColor="#FF56D68A"
+        android:fillAlpha="0.85" />
+    <path
+        android:pathData="M58,66c5,-3 12,-1 12,3c0,4 -7,6 -12,4c-4,-2 -4,-5 0,-7z"
+        android:fillColor="#FF56D68A"
+        android:fillAlpha="0.7" />
+
+    <!-- ring -->
+    <group android:pivotX="54" android:pivotY="58" android:rotation="-24">
+        <path
+            android:pathData="M54,42m-34,0a34,10 0,1 1,68 0a34,10 0,1 1,-68 0"
+            android:strokeColor="#FFB98BFF"
+            android:strokeWidth="3"
+            android:strokeAlpha="0.9" />
+    </group>
+
+    <!-- impact beam -->
+    <path
+        android:pathData="M18,20L48,50"
+        android:strokeColor="#FFFF4D6D"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+</vector>

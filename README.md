@@ -1,3 +1,12 @@
+# Galaxy Sandbox (native Android game)
+
+> **New:** [`GalaxySandbox/`](GalaxySandbox/README.md) is a from-scratch **native Kotlin Android game** —
+> a galaxy sandbox combining *Solar Smash* style planet destruction with a *WorldBox* style
+> civilisation sandbox on each planet's surface. Custom SurfaceView render engine + Jetpack Compose UI,
+> no WebView. See [GalaxySandbox/README.md](GalaxySandbox/README.md) for the full description and build steps.
+
+---
+
 # 仙门掌门 · Sect Master
 
 > 一个受 *Pixel Starships* 启发的 **修真宗门经营游戏**（浏览器原型）。
