@@ -13,7 +13,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # The game lives on the session branch; check that out explicitly so the
+      # workflow also works when it is dispatched from main.
       - uses: actions/checkout@v4
+        with:
+          ref: arena/01a058fd-game
 
       - uses: actions/setup-java@v4
         with:
